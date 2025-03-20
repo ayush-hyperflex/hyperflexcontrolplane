@@ -1,4 +1,3 @@
-version: "3.9"
 
 services:
   control-plane:
@@ -15,7 +14,9 @@ services:
 
   capacity-planner:
 
-    image: ayushhyperflex/splunk_to_elastic_capacity_planner:latest
+    image: capacity_planner
     container_name: capacity-planner
+    environment:
+      - NODE_TLS_REJECT_UNAUTHORIZED=1
     ports:
       - "3000:3000"

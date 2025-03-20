@@ -14,4 +14,4 @@ for module_name in MODULES:
         mod = importlib.import_module(f"modules.{module_name}.routes")
         app.include_router(mod.router, prefix=f"/modules/{module_name}", tags=[module_name])
     except ModuleNotFoundError:
-        print(f"⚠️ Warning: Module '{module_name}' not found in 'modules/' directory.")
+        print(f"Warning: Module '{module_name}' not found in 'modules/' directory.")
