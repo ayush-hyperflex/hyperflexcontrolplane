@@ -1,7 +1,7 @@
 
 services:
   control-plane:
-    image: ayushhyperflex/hyperflexcontrolplane:latest
+    image: hyperflex/hyperflexcontrolplane:latest
     container_name: control-plane
     environment:
       - MODULES=capacity_planner  # Define modules here
@@ -14,7 +14,7 @@ services:
 
   capacity-planner:
 
-    image: capacity_planner
+    image: hyperflex/s2e-capacity-planner-service
     container_name: capacity-planner
     environment:
       - NODE_TLS_REJECT_UNAUTHORIZED=1

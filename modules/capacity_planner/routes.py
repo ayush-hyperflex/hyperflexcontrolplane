@@ -23,7 +23,8 @@ async def forward_request(method: str, path: str, request: Request, query_params
     """Forwards requests to the capacity planner service."""
     target_url = f"{CAPACITY_PLANNER_URL}/{path}"
     logging.info(f'Request  Received on {target_url}')
-    # try:
+    #TODO : Add Try Except with Proper Logging and Formatting
+    #try:
     async with httpx.AsyncClient(verify=False,timeout=300) as client:
         if method == "GET":
             logging.info("GET Request Received")
