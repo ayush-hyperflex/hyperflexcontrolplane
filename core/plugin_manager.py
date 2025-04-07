@@ -2,12 +2,18 @@ import os
 import importlib
 from fastapi import FastAPI
 import logging
-app = FastAPI(title="Control Plane")
+from fastapi.middleware.cors import CORSMiddleware
 
+app = FastAPI(title="Control Plane")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # Read available modules from env
 MODULES = os.getenv("MODULES", "").split(",")
-
-
 for module_name in MODULES:
     try:
         # Dynamically import and register module routes

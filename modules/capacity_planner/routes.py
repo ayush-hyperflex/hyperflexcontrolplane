@@ -17,35 +17,37 @@ logging.basicConfig(
     ]
 )
 
-
 async def forward_request(method: str, path: str, request: Request, query_params: Optional[dict] = None,
                           body: Optional[dict] = None):
     """Forwards requests to the capacity planner service."""
     target_url = f"{CAPACITY_PLANNER_URL}/{path}"
     logging.info(f'Request  Received on {target_url}')
-    #TODO : Add Try Except with Proper Logging and Formatting
-    #try:
-    async with httpx.AsyncClient(verify=False,timeout=300) as client:
-        if method == "GET":
-            logging.info("GET Request Received")
-            response = await client.get(target_url, params=query_params if query_params else None)
-            logging.info(f'Sending Request to {target_url}')
-        elif method == "POST":
-            if body is not None:
-                body= body
-            elif body:
-                body = request.body()
+    try:
+        async with httpx.AsyncClient(verify=False, timeout=300) as client:
+            if method == "GET":
+                logging.info("GET Request Received")
+                logging.info(f'Sending Request to {target_url}')
+            elif method == "POST":
+                if body is not None:
+                    body = body
+                elif body:
+                    body = request.body()
+                else:
+                    body= None
+                response = await client.post(target_url, json=body)
+                logging.info(f"{response.text},{response.status_code}")
+                if response.status_code not in (200,201):
+                    return response.json()
+                else:
+                    raise HTTPException(status_code=response.status_code,detail=response.json() )
             else:
-                body= None
-            response = await client.post(target_url, json=body)
-            logging.info(f"{response.text},{response.status_code}")
-        else:
-            raise HTTPException(status_code=405, detail="Method Not Allowed")
-        return response.json()
-    # except httpx.RequestError:
-    #     error_message = traceback.format_exc()
-    #     # logging.error(f"Exception details:\n, {error_message}" , error_message)
-    #     raise HTTPException(status_code=500, detail="Failed to reach Capacity Planner service")
+                raise HTTPException(status_code=405, detail="Method Not Allowed")
+
+    except httpx.RequestError:
+        error_message = traceback.format_exc()
+        logging.error(f"Exception details:\n, {error_message}" , error_message)
+        raise HTTPException(status_code=500, detail="Failed to reach Capacity Planner service")
+
 
 
 @router.post("/deployments")
@@ -77,7 +79,6 @@ async def proxy_elasticsearch_versions(request: Request):
 async def proxy_prepare(request: Request,query_params: Optional[str] = Query(None, description="Optional query parameters"),
     body: Dict[str, Any] = Body(None, description="Optional raw JSON request body")):
     return await forward_request("POST", "prepare", request,query_params,body)
-
 
 # Route: Proxy POST `/prepare-iac`
 @router.post("/prepare-iac")
