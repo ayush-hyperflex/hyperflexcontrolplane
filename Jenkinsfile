@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'docker:latest'
+            args '-v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    }
 
     environment {
         DOCKER_IMAGE = "ayushhyperflex/hyperflexcontrolplane"
@@ -31,8 +36,7 @@ pipeline {
             steps {
                 script {
                     sh '''
-                        apt-get update
-                        apt-get install -y trivy
+                        apk add --no-cache trivy
                         trivy image ${DOCKER_IMAGE}:${DOCKER_TAG} --severity HIGH,CRITICAL --exit-code 1
                     '''
                 }
