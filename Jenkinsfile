@@ -1,12 +1,12 @@
-pipeline 
+pipeline {
     agent any
 
     environment {
         DOCKER_IMAGE = 'ayushhyperflex/hyperflexcontrolplane'
         DOCKER_TAG = "latest"
-        DOCKER_REGISTRY = 'https://hub.docker.com/' 
+        DOCKER_REGISTRY = 'hub.docker.com' 
     }
-
+}
     stages {
        
 
