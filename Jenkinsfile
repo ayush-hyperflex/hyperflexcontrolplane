@@ -18,7 +18,7 @@ pipeline {
             steps {
                 script {
                     try {
-                        docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}", ".")
+                        sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
                     } catch (Exception e) {
                         currentBuild.result = 'FAILURE'
                         error("Failed to build Docker image: ${e.message}")
@@ -30,12 +30,10 @@ pipeline {
         stage('Security Scan') {
             steps {
                 script {
-                    // Using Docker to run Trivy instead of installing it
                     sh '''
-                        docker run --rm \
-                            -v /var/run/docker.sock:/var/run/docker.sock \
-                            aquasec/trivy image ${DOCKER_IMAGE}:${DOCKER_TAG} \
-                            --severity HIGH,CRITICAL --exit-code 1
+                        apt-get update
+                        apt-get install -y trivy
+                        trivy image ${DOCKER_IMAGE}:${DOCKER_TAG} --severity HIGH,CRITICAL --exit-code 1
                     '''
                 }
             }
@@ -48,10 +46,8 @@ pipeline {
             steps {
                 script {
                     try {
-                        docker.withRegistry("https://${DOCKER_REGISTRY}") {
-                            docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").push()
-                            docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").push('latest')
-                        }
+                        sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                        sh "docker push ${DOCKER_IMAGE}:latest"
                     } catch (Exception e) {
                         currentBuild.result = 'FAILURE'
                         error("Failed to push Docker image: ${e.message}")
