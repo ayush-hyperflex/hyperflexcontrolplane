@@ -4,7 +4,7 @@ pipeline {
     environment {
         DOCKER_IMAGE = "ayushhyperflex/hyperflexcontrolplane"
         DOCKER_TAG = "latest"
-        DOCKER_REGISTRY = "hub.docker.com" 
+        DOCKER_REGISTRY = "hub.docker.com"
     }
 }
     stages {
@@ -21,7 +21,7 @@ pipeline {
         stage('Security Scan') {
             steps {
                 script {
-                    // Run Trivy scan
+
                     sh '''
                         apt-get update
                         apt-get install -y trivy
