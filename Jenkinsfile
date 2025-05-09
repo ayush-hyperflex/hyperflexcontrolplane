@@ -6,14 +6,23 @@ pipeline {
         DOCKER_TAG = "latest"
         DOCKER_REGISTRY = "hub.docker.com"
     }
-}
+
     stages {
-       
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                    try {
+                        docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}", ".")
+                    } catch (Exception e) {
+                        currentBuild.result = 'FAILURE'
+                        error("Failed to build Docker image: ${e.message}")
+                    }
                 }
             }
         }
@@ -21,11 +30,12 @@ pipeline {
         stage('Security Scan') {
             steps {
                 script {
-
+                    // Using Docker to run Trivy instead of installing it
                     sh '''
-                        apt-get update
-                        apt-get install -y trivy
-                        trivy image ${DOCKER_IMAGE}:${DOCKER_TAG} --severity HIGH,CRITICAL --exit-code 1
+                        docker run --rm \
+                            -v /var/run/docker.sock:/var/run/docker.sock \
+                            aquasec/trivy image ${DOCKER_IMAGE}:${DOCKER_TAG} \
+                            --severity HIGH,CRITICAL --exit-code 1
                     '''
                 }
             }
@@ -33,13 +43,18 @@ pipeline {
 
         stage('Push Docker Image') {
             when {
-                branch 'main'  // Only push on main branch
+                branch 'main'
             }
             steps {
                 script {
-                    docker.withRegistry("https://${DOCKER_REGISTRY}") {
-                        docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").push()
-                        docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").push('latest')
+                    try {
+                        docker.withRegistry("https://${DOCKER_REGISTRY}") {
+                            docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").push()
+                            docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").push('latest')
+                        }
+                    } catch (Exception e) {
+                        currentBuild.result = 'FAILURE'
+                        error("Failed to push Docker image: ${e.message}")
                     }
                 }
             }
@@ -47,12 +62,16 @@ pipeline {
 
         stage('Deploy') {
             when {
-                branch 'main' 
+                branch 'main'
             }
             steps {
                 script {
-                    
-                    sh 'docker-compose up -d'
+                    try {
+                        sh 'docker-compose up -d'
+                    } catch (Exception e) {
+                        currentBuild.result = 'FAILURE'
+                        error("Failed to deploy: ${e.message}")
+                    }
                 }
             }
         }
@@ -69,3 +88,4 @@ pipeline {
             echo 'Pipeline failed!'
         }
     }
+}
